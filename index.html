@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carga de archivos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+      body {
+        background-image: url('https://www.roc21.com/blog/wp-content/uploads/2012/09/fondos-para-pa%CC%81ginas-web-12.jpg');
+        background-size: cover;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        background-color: rgba(0, 0, 0, 0.4);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        margin-top: 20px;
+      }
+
+      .custom-file-label::after {
+        content: "Seleccionar";
+      }
+
+      #file-info {
+        background-color: rgba(0, 0, 0, 0.4);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        margin-top: 20px;
+      }
+
+      #file-details p {
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body class="container mt-5">
+    <h1 class="mb-4">Carga de archivos</h1>
+    <form action="/upload" method="POST" enctype="multipart/form-data" class="mb-3">
+      <div class="custom-file">
+        <input type="file" class="custom-file-input" id="fileInput" name="files" multiple onchange="displayFileName()">
+        <label class="custom-file-label" for="fileInput">Selecciona archivos</label>
+      </div>
+      <button type="submit" class="btn btn-primary mt-2">Cargar</button>
+    </form>
+
+    <div id="file-info">
+      <div class="card-body">
+        <h5 class="card-title">Detalles del Archivo</h5>
+        <div id="file-details"></div>
+      </div>
+    </div>
+
+    <script>
+      function displayFileName() {
+        const fileInput = document.getElementById('fileInput');
+        const label = document.querySelector('.custom-file-label');
+        label.innerHTML = fileInput.files.length > 1 ? `${fileInput.files.length} archivos seleccionados` : fileInput.files[0].name;
+      }
+
+      const form = document.querySelector('form');
+      const fileInfoDiv = document.querySelector('#file-info .card-body');
+      const fileDetailsDiv = document.querySelector('#file-details');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const fileInfo = await response.json();
+          fileDetailsDiv.innerHTML = fileInfo.map(file => {
+            if (file.mimetype.startsWith('image/')) {
+              // Si es una imagen, mostrarla
+              return `
+                <p class="mb-0">Nombre: ${file.filename}</p>
+                <p class="mb-0">Nombre original: ${file.originalname}</p>
+                <p class="mb-0">Tamaño: ${file.size} bytes</p>
+                <p class="mb-0">Tipo MIME: ${file.mimetype}</p>
+                <img src="/${file.filename}" alt="Imagen" style="max-width: 100%; max-height: 300px;">
+                <br>`;
+            } else {
+              return `
+                <p class="mb-0">Nombre: ${file.filename}</p>
+                <p class="mb-0">Nombre original: ${file.originalname}</p>
+                <p class="mb-0">Tamaño: ${file.size} bytes</p>
+                <p class="mb-0">Tipo MIME: ${file.mimetype}</p>
+                <br>`;
+            }
+          }).join('');
+        } else {
+          fileDetailsDiv.innerHTML = `Error al cargar el archivo. ${await response.text()}`;
+        }
+      });
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  </body>
+</html>
